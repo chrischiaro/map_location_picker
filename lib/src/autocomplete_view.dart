@@ -417,6 +417,9 @@ class PlacesAutocomplete extends StatelessWidget {
 
   /// Get [AutoCompleteState] for [AutoCompleteTextField]
   AutoCompleteState autoCompleteState() {
+    logger.d('ApiHeaders: $placesApiHeaders \n'
+        'BaseUrl: $placesBaseUrl \n'
+        'HttpClient: ${placesHttpClient.toString()}');
     return AutoCompleteState(
       apiHeaders: placesApiHeaders,
       baseUrl: placesBaseUrl,

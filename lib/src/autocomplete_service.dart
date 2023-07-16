@@ -67,6 +67,10 @@ class AutoCompleteState {
     String? region,
   }) async {
     try {
+      logger.d('ApiHeaders: $apiHeaders \n'
+          'BaseUrl: $baseUrl \n'
+          'HttpClient: ${httpClient.toString()}');
+
       final places = GoogleMapsPlaces(
         apiKey: apiKey,
         httpClient: httpClient,
@@ -86,6 +90,8 @@ class AutoCompleteState {
         strictbounds: strictbounds,
         types: types,
       );
+
+      logger.d('autocomplete_service response status: ${response.status}');
 
       /// When get any error from the API, show the error in the console.
       if (response.hasNoResults ||

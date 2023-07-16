@@ -6,28 +6,73 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import "package:google_maps_webapi/geocoding.dart";
 import 'package:google_maps_webapi/places.dart';
 import 'package:http/http.dart';
+import 'package:map_location_picker/src/searchnearby_view.dart';
 
 import 'autocomplete_view.dart';
 import 'logger.dart';
 
+enum PlacesSearchType {
+  autoComplete,
+  nearby,
+}
+
 class MapLocationPicker extends StatefulWidget {
-  /// TextDecoration object for the Search Autocomplete field
-  final InputDecoration? autocompleteTextboxDecoration;
-
-  /// Padding around the map
-  final EdgeInsets padding;
-
-  /// Compass for the map (default: true)
-  final bool compassEnabled;
-
-  /// Lite mode for the map (default: false)
-  final bool liteModeEnabled;
+  /// Add your own custom markers
+  final Map<String, LatLng>? additionalMarkers;
 
   /// API key for the map & places
   final String apiKey;
 
+  /// TextDecoration object for the Search Autocomplete field
+  final InputDecoration? autocompleteTextboxDecoration;
+
+  /// Back button replacement when [showBackButton] is false and [backButton] is not null
+  final Widget? backButton;
+
+  /// Top card text field border radius
+  final BorderRadius? borderRadius;
+
+  /// Bottom card color
+  final Color? bottomCardColor;
+
+  /// Bottom card icon
+  final Icon bottomCardIcon;
+
+  /// Bottom card margin
+  final EdgeInsetsGeometry bottomCardMargin;
+
+  /// Bottom card shape
+  final ShapeBorder bottomCardShape;
+
+  /// Bottom card tooltip
+  final String bottomCardTooltip;
+
+  /// Compass for the map (default: true)
+  final bool compassEnabled;
+
+  /// Popup route on next press (default: false)
+  final bool canPopOnNextButtonTaped;
+
+  /// Components set results to be restricted to a specific area
+  /// components: [Component(Component.country, "us")]
+  final List<Component> components;
+
+  /// currentLatLng init location for camera position
+  /// currentLatLng: Location(lat: -33.852, lng: 151.211),
+  final LatLng? currentLatLng;
+
   /// GPS accuracy for the map
   final LocationAccuracy desiredAccuracy;
+
+  /// Dialog title
+  final String dialogTitle;
+
+  /// List of fields to be returned by the Google Maps Places API.
+  /// Refer to the Google Documentation here for a list of valid values: https://developers.google.com/maps/documentation/places/web-service/details
+  final List<String> fields;
+
+  /// GeoCoding api headers
+  final Map<String, String>? geoCodingApiHeaders;
 
   /// GeoCoding base url
   final String? geoCodingBaseUrl;
@@ -35,71 +80,45 @@ class MapLocationPicker extends StatefulWidget {
   /// GeoCoding http client
   final Client? geoCodingHttpClient;
 
-  /// GeoCoding api headers
-  final Map<String, String>? geoCodingApiHeaders;
+  /// Hide Suggestions on keyboard hide
+  final bool hideSuggestionsOnKeyboardHide;
+
+  /// Language code for Places API results
+  /// language: 'en',
+  final String? language;
+
+  /// Lite mode for the map (default: false)
+  final bool liteModeEnabled;
+
+  /// Location bounds for restricting results to a radius around a location
+  /// location: Location(lat: -33.867, lng: 151.195)
+  final Location? location;
 
   /// GeoCoding location type
   final List<String> locationType;
 
-  /// GeoCoding result type
-  final List<String> resultType;
+  /// Map type (default: MapType.normal)
+  final MapType mapType;
 
   /// Map minimum zoom level & maximum zoom level
   final MinMaxZoomPreference minMaxZoomPreference;
 
-  /// Top card margin
-  final EdgeInsetsGeometry topCardMargin;
-
-  /// Top card color
-  final Color? topCardColor;
-
-  /// Top card shape
-  final ShapeBorder topCardShape;
-
-  /// Top card text field border radius
-  final BorderRadius? borderRadius;
-
-  /// Top card text field hint text
-  final String searchHintText;
-
-  /// Bottom card shape
-  final ShapeBorder bottomCardShape;
-
-  /// Bottom card margin
-  final EdgeInsetsGeometry bottomCardMargin;
-
-  /// Bottom card icon
-  final Icon bottomCardIcon;
-
-  /// Bottom card tooltip
-  final String bottomCardTooltip;
-
-  /// Bottom card color
-  final Color? bottomCardColor;
-
-  /// On Suggestion Selected callback
-  final Function(PlacesDetailsResponse?)? onSuggestionSelected;
+  /// Offset for pagination of results
+  /// offset: int,
+  final num? offset;
 
   /// On Next Page callback
   final Function(GeocodingResult?) onNext;
 
-  /// Show back button (default: true)
-  final bool showBackButton;
+  /// On Suggestion Selected callback
+  final Function(PlacesDetailsResponse?)? onSuggestionSelected;
 
-  /// Popup route on next press (default: false)
-  final bool canPopOnNextButtonTaped;
+  /// Origin location for calculating distance from results
+  /// origin: Location(lat: -33.852, lng: 151.211),
+  final Location? origin;
 
-  /// Back button replacement when [showBackButton] is false and [backButton] is not null
-  final Widget? backButton;
-
-  /// Show more suggestions
-  final bool showMoreOptions;
-
-  /// Dialog title
-  final String dialogTitle;
-
-  /// httpClient is used to make network requests.
-  final Client? placesHttpClient;
+  /// Padding around the map
+  final EdgeInsets padding;
 
   /// apiHeader is used to add headers to the request.
   final Map<String, String>? placesApiHeaders;
@@ -107,88 +126,79 @@ class MapLocationPicker extends StatefulWidget {
   /// baseUrl is used to build the url for the request.
   final String? placesBaseUrl;
 
-  /// Session token for Google Places API
-  final String? sessionToken;
+  /// httpClient is used to make network requests.
+  final Client? placesHttpClient;
 
-  /// Offset for pagination of results
-  /// offset: int,
-  final num? offset;
-
-  /// Origin location for calculating distance from results
-  /// origin: Location(lat: -33.852, lng: 151.211),
-  final Location? origin;
-
-  /// currentLatLng init location for camera position
-  /// currentLatLng: Location(lat: -33.852, lng: 151.211),
-  final LatLng? currentLatLng;
-
-  /// Location bounds for restricting results to a radius around a location
-  /// location: Location(lat: -33.867, lng: 151.195)
-  final Location? location;
+  /// PlacesSearchType enum indicates whether to show use
+  /// an Autocomplete search box, or a Nearby Search
+  final PlacesSearchType placesSearchType;
 
   /// Radius for restricting results to a radius around a location
   /// radius: Radius in meters
   final num? radius;
 
-  /// Language code for Places API results
-  /// language: 'en',
-  final String? language;
-
-  /// Types for restricting results to a set of place types
-  final List<String> types;
-
-  /// Components set results to be restricted to a specific area
-  /// components: [Component(Component.country, "us")]
-  final List<Component> components;
-
-  /// Bounds for restricting results to a set of bounds
-  final bool strictbounds;
-
   /// Region for restricting results to a set of regions
   /// region: "us"
   final String? region;
 
-  /// List of fields to be returned by the Google Maps Places API.
-  /// Refer to the Google Documentation here for a list of valid values: https://developers.google.com/maps/documentation/places/web-service/details
-  final List<String> fields;
-
-  /// Hide Suggestions on keyboard hide
-  final bool hideSuggestionsOnKeyboardHide;
-
-  /// Map type (default: MapType.normal)
-  final MapType mapType;
+  /// GeoCoding result type
+  final List<String> resultType;
 
   /// Search text field controller
   final TextEditingController? searchController;
 
-  /// Add your own custom markers
-  final Map<String, LatLng>? additionalMarkers;
+  /// Top card text field hint text
+  final String searchHintText;
+
+  /// Session token for Google Places API
+  final String? sessionToken;
+
+  /// Show back button (default: true)
+  final bool showBackButton;
+
+  /// Show more suggestions
+  final bool showMoreOptions;
+
+  /// Bounds for restricting results to a set of bounds
+  final bool strictbounds;
+
+  /// Top card color
+  final Color? topCardColor;
+
+  /// Top card margin
+  final EdgeInsetsGeometry topCardMargin;
+
+  /// Top card shape
+  final ShapeBorder topCardShape;
+
+  /// Types for restricting results to a set of place types
+  final List<String> types;
 
   const MapLocationPicker({
-    Key? key,
     required this.apiKey,
     this.additionalMarkers,
     this.autocompleteTextboxDecoration,
-    this.desiredAccuracy = LocationAccuracy.high,
     this.backButton,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
-    this.bottomCardShape = const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(12)),
-    ),
     this.bottomCardColor,
     this.bottomCardIcon = const Icon(Icons.send),
     this.bottomCardMargin = const EdgeInsets.fromLTRB(8, 8, 8, 16),
+    this.bottomCardShape = const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+    ),
     this.bottomCardTooltip = "Continue with this location",
+    this.canPopOnNextButtonTaped = false,
     this.compassEnabled = true,
     this.components = const [],
-    this.canPopOnNextButtonTaped = false,
     this.currentLatLng = const LatLng(28.8993468, 76.6250249),
+    this.desiredAccuracy = LocationAccuracy.high,
     this.dialogTitle = 'You can also use the following options',
     this.fields = const [],
+    this.geoCodingApiHeaders,
     this.geoCodingBaseUrl,
     this.geoCodingHttpClient,
-    this.geoCodingApiHeaders,
     this.hideSuggestionsOnKeyboardHide = false,
+    Key? key,
     this.language,
     this.liteModeEnabled = false,
     this.location,
@@ -196,13 +206,14 @@ class MapLocationPicker extends StatefulWidget {
     this.mapType = MapType.normal,
     this.minMaxZoomPreference = const MinMaxZoomPreference(10, 20),
     this.offset,
-    this.onSuggestionSelected,
     required this.onNext,
+    this.onSuggestionSelected,
     this.origin,
     this.padding = const EdgeInsets.all(0),
-    this.placesHttpClient,
     this.placesApiHeaders,
     this.placesBaseUrl,
+    this.placesHttpClient,
+    this.placesSearchType = PlacesSearchType.autoComplete,
     this.radius,
     this.region,
     this.resultType = const [],
@@ -268,6 +279,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       position: _initialPosition,
     ));
 
+    logger.d('PlacesSearchType = ${widget.placesSearchType}');
+
     return Scaffold(
       body: Stack(
         children: [
@@ -312,51 +325,9 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              PlacesAutocomplete(
-                apiKey: widget.apiKey,
-                backButton: widget.backButton,
-                borderRadius: widget.borderRadius,
-                components: widget.components,
-                decoration: widget.autocompleteTextboxDecoration,
-                fields: widget.fields,
-                hideSuggestionsOnKeyboardHide:
-                    widget.hideSuggestionsOnKeyboardHide,
-                language: widget.language,
-                location: widget.location,
-                mounted: mounted,
-                offset: widget.offset,
-                origin: widget.origin,
-                placesApiHeaders: widget.placesApiHeaders,
-                placesBaseUrl: widget.placesBaseUrl,
-                placesHttpClient: widget.placesHttpClient,
-                radius: widget.radius,
-                region: widget.region,
-                searchController: _searchController,
-                searchHintText: widget.searchHintText,
-                sessionToken: widget.sessionToken,
-                showBackButton: widget.showBackButton,
-                strictbounds: widget.strictbounds,
-                topCardColor: widget.topCardColor,
-                topCardMargin: widget.topCardMargin,
-                topCardShape: widget.topCardShape,
-                types: widget.types,
-                onGetDetailsByPlaceId: (placesDetails) async {
-                  if (placesDetails == null) {
-                    logger.e("placesDetails is null");
-                    return;
-                  }
-                  _initialPosition = LatLng(
-                    placesDetails.result.geometry?.location.lat ?? 0,
-                    placesDetails.result.geometry?.location.lng ?? 0,
-                  );
-                  final controller = await _controller.future;
-                  controller.animateCamera(
-                      CameraUpdate.newCameraPosition(cameraPosition()));
-                  _address = placesDetails.result.formattedAddress ?? "";
-                  widget.onSuggestionSelected?.call(placesDetails);
-                  setState(() {});
-                },
-              ),
+              widget.placesSearchType == PlacesSearchType.autoComplete
+                  ? buildPlacesAutocomplete()
+                  : buildPlacesNearbySearch(),
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -494,6 +465,62 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         ],
       ),
     );
+  }
+
+  PlacesAutocomplete buildPlacesAutocomplete() {
+    logger.d('Inside `buildPlacesAutocomplete`: '
+        'ApiHeaders: ${widget.placesApiHeaders} \n'
+        'BaseUrl: ${widget.placesBaseUrl} \n'
+        'HttpClient: ${widget.placesHttpClient.toString()}');
+
+    return PlacesAutocomplete(
+      apiKey: widget.apiKey,
+      backButton: widget.backButton,
+      borderRadius: widget.borderRadius,
+      components: widget.components,
+      decoration: widget.autocompleteTextboxDecoration,
+      fields: widget.fields,
+      hideSuggestionsOnKeyboardHide: widget.hideSuggestionsOnKeyboardHide,
+      language: widget.language,
+      location: widget.location,
+      mounted: mounted,
+      offset: widget.offset,
+      origin: widget.origin,
+      placesApiHeaders: widget.placesApiHeaders,
+      placesBaseUrl: widget.placesBaseUrl,
+      placesHttpClient: widget.placesHttpClient,
+      radius: widget.radius,
+      region: widget.region,
+      searchController: _searchController,
+      searchHintText: widget.searchHintText,
+      sessionToken: widget.sessionToken,
+      showBackButton: widget.showBackButton,
+      strictbounds: widget.strictbounds,
+      topCardColor: widget.topCardColor,
+      topCardMargin: widget.topCardMargin,
+      topCardShape: widget.topCardShape,
+      types: widget.types,
+      onGetDetailsByPlaceId: (placesDetails) async {
+        if (placesDetails == null) {
+          logger.e("placesDetails is null");
+          return;
+        }
+        _initialPosition = LatLng(
+          placesDetails.result.geometry?.location.lat ?? 0,
+          placesDetails.result.geometry?.location.lng ?? 0,
+        );
+        final controller = await _controller.future;
+        controller
+            .animateCamera(CameraUpdate.newCameraPosition(cameraPosition()));
+        _address = placesDetails.result.formattedAddress ?? "";
+        widget.onSuggestionSelected?.call(placesDetails);
+        setState(() {});
+      },
+    );
+  }
+
+  PlacesSearchNearby buildPlacesNearbySearch() {
+    return PlacesSearchNearby(apiKey: widget.apiKey);
   }
 
   /// Camera position moved to location
