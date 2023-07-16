@@ -58,7 +58,7 @@ class MapLocationPicker extends StatefulWidget {
   final List<Component> components;
 
   /// currentLatLng init location for camera position
-  /// currentLatLng: Location(lat: -33.852, lng: 151.211),
+  /// currentLatLng: Location(lat: 37.6922400, lng: -97.3375400),
   final LatLng? currentLatLng;
 
   /// GPS accuracy for the map
@@ -190,7 +190,7 @@ class MapLocationPicker extends StatefulWidget {
     this.canPopOnNextButtonTaped = false,
     this.compassEnabled = true,
     this.components = const [],
-    this.currentLatLng = const LatLng(28.8993468, 76.6250249),
+    this.currentLatLng = const LatLng(37.6922400, -97.3375400),
     this.desiredAccuracy = LocationAccuracy.high,
     this.dialogTitle = 'You can also use the following options',
     this.fields = const [],
@@ -240,7 +240,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   final Completer<GoogleMapController> _controller = Completer();
 
   /// initial latitude & longitude
-  late LatLng _initialPosition = const LatLng(28.8993468, 76.6250249);
+  late LatLng _initialPosition = const LatLng(37.6922400, -97.3375400);
 
   /// initial address text
   late String _address = "Tap on map to get address";
@@ -485,21 +485,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       location: widget.location,
       mounted: mounted,
       offset: widget.offset,
-      origin: widget.origin,
-      placesApiHeaders: widget.placesApiHeaders,
-      placesBaseUrl: widget.placesBaseUrl,
-      placesHttpClient: widget.placesHttpClient,
-      radius: widget.radius,
-      region: widget.region,
-      searchController: _searchController,
-      searchHintText: widget.searchHintText,
-      sessionToken: widget.sessionToken,
-      showBackButton: widget.showBackButton,
-      strictbounds: widget.strictbounds,
-      topCardColor: widget.topCardColor,
-      topCardMargin: widget.topCardMargin,
-      topCardShape: widget.topCardShape,
-      types: widget.types,
       onGetDetailsByPlaceId: (placesDetails) async {
         if (placesDetails == null) {
           logger.e("placesDetails is null");
@@ -516,11 +501,64 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         widget.onSuggestionSelected?.call(placesDetails);
         setState(() {});
       },
+      origin: widget.origin,
+      placesApiHeaders: widget.placesApiHeaders,
+      placesBaseUrl: widget.placesBaseUrl,
+      placesHttpClient: widget.placesHttpClient,
+      radius: widget.radius,
+      region: widget.region,
+      searchController: _searchController,
+      searchHintText: widget.searchHintText,
+      sessionToken: widget.sessionToken,
+      showBackButton: widget.showBackButton,
+      strictbounds: widget.strictbounds,
+      topCardColor: widget.topCardColor,
+      topCardMargin: widget.topCardMargin,
+      topCardShape: widget.topCardShape,
+      types: widget.types,
     );
   }
 
   PlacesSearchNearby buildPlacesNearbySearch() {
-    return PlacesSearchNearby(apiKey: widget.apiKey);
+    return PlacesSearchNearby(
+      apiKey: widget.apiKey,
+      backButton: widget.backButton,
+      borderRadius: widget.borderRadius,
+      components: widget.components,
+      decoration: widget.autocompleteTextboxDecoration,
+      fields: widget.fields,
+      hideSuggestionsOnKeyboardHide: widget.hideSuggestionsOnKeyboardHide,
+      language: widget.language,
+      location: widget.location,
+      mounted: mounted,
+      onGetDetailsByPlaceId: (placesDetails) async {
+        if (placesDetails == null) {
+          logger.e("placesDetails is null");
+          return;
+        }
+        _initialPosition = LatLng(
+          placesDetails.result.geometry?.location.lat ?? 0,
+          placesDetails.result.geometry?.location.lng ?? 0,
+        );
+        final controller = await _controller.future;
+        controller
+            .animateCamera(CameraUpdate.newCameraPosition(cameraPosition()));
+        _address = placesDetails.result.formattedAddress ?? "";
+        widget.onSuggestionSelected?.call(placesDetails);
+        setState(() {});
+      },
+      placesApiHeaders: widget.placesApiHeaders,
+      placesBaseUrl: widget.placesBaseUrl,
+      placesHttpClient: widget.placesHttpClient,
+      searchController: _searchController,
+      searchHintText: widget.searchHintText,
+      sessionToken: widget.sessionToken,
+      showBackButton: widget.showBackButton,
+      topCardColor: widget.topCardColor,
+      topCardMargin: widget.topCardMargin,
+      topCardShape: widget.topCardShape,
+      types: widget.types,
+    );
   }
 
   /// Camera position moved to location

@@ -22,14 +22,14 @@ enum SearchNearbyRankOption implements Comparable<SearchNearbyRankOption> {
 }
 
 class PlacesNearbySearchState {
-  /// httpClient is used to make network requests.
-  final Client? httpClient;
-
   /// apiHeader is used to add headers to the request.
   final Map<String, String>? apiHeaders;
 
   /// baseUrl is used to build the url for the request.
   final String? baseUrl;
+
+  /// httpClient is used to make network requests.
+  final Client? httpClient;
 
   /// The current state of the autocomplete.
   List<PlacesSearchResult> results = [];
@@ -41,53 +41,37 @@ class PlacesNearbySearchState {
   });
 
   /// void future function to get the autocomplete results.
-  Future<List<PlacesSearchResult>> search(
-    /// final String input,
-    String query,
-
+  Future<List<PlacesSearchResult>> search({
     /// API key for Google Places API
-    String apiKey, {
-    /// Session token for Google Places API
-    String? sessionToken,
+    required String apiKey,
 
-    /// How to rank the results. Default is by 'distance'.
-    SearchNearbyRankOption rankResultsBy = SearchNearbyRankOption.distance,
+    /// final String input,
+    required String query,
 
-    /// Offset for pagination of results
-    /// offset: int,
-    num? offset,
-
-    /// Origin location for calculating distance from results
-    /// origin: Location(lat: -33.852, lng: 151.211),
-    Location? origin,
-
-    /// Location bounds for restricting results to a radius around a location
-    /// location: Location(lat: -33.867, lng: 151.195)
-    Location? location,
-
-    /// Radius for restricting results to a radius around a location
-    /// radius: Radius in meters
-    num? radius,
-
-    /// Language code for Places API results
     /// language: 'en',
     String? language,
 
+    /// Location bounds for restricting results to a radius around a location
+    /// location: Location(lat: 37.6922400, lng: -97.3375400)
+    Location? location,
+
+    /// Language code for Places API results
+    /// How to rank the results. Default is by 'distance'.
+    SearchNearbyRankOption rankResultsBy = SearchNearbyRankOption.distance,
+
     /// Types for restricting results to a set of place types
     List<String> types = const [],
-
-    /// Components set results to be restricted to a specific area
-    /// components: [Component(Component.country, "us")]
-    List<Component> components = const [],
-
-    /// Bounds for restricting results to a set of bounds
-    bool strictbounds = false,
-
-    /// Region for restricting results to a set of regions
-    /// region: "us"
-    String? region,
   }) async {
+    if (types.length > 1) {
+      throw ArgumentError(
+          'When calling `search` with a `types` value for a Nearby Search, '
+          'you can only include one type. This is because Google Map\'s Nearby Search API only '
+          'accepts a single type, so only the first value would be used anyway.');
+    }
+
     try {
+      logger.d('apiKey = $apiKey');
+
       final places = GoogleMapsPlaces(
         apiKey: apiKey,
         httpClient: httpClient,
@@ -99,6 +83,7 @@ class PlacesNearbySearchState {
         rankResultsBy.toString(),
         keyword: query,
         language: language,
+        type: types.isNotEmpty ? types[0] : '',
       );
 
       /// When get any error from the API, show the error in the console.

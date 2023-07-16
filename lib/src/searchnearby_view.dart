@@ -218,10 +218,6 @@ class PlacesSearchNearby extends StatelessWidget {
   /// If not specified, a simple text is shown
   final WidgetBuilder? noItemsFoundBuilder;
 
-  /// Offset for pagination of results
-  /// offset: int,
-  final num? offset;
-
   /// on change callback
   final void Function(PlacesSearchResult?)? onChanged;
 
@@ -237,10 +233,6 @@ class PlacesSearchNearby extends StatelessWidget {
   /// On suggestion selected callback
   final void Function(PlacesSearchResult)? onSuggestionSelected;
 
-  /// Origin location for calculating distance from results
-  /// origin: Location(lat: -33.852, lng: 151.211),
-  final Location? origin;
-
   /// apiHeader is used to add headers to the request.
   final Map<String, String>? placesApiHeaders;
 
@@ -250,12 +242,8 @@ class PlacesSearchNearby extends StatelessWidget {
   /// httpClient is used to make network requests.
   final Client? placesHttpClient;
 
-  /// Radius for restricting results to a radius around a location
-  /// radius: Radius in meters
-  final num? radius;
-
-  /// Region for restricting results to a set of regions
-  /// region: "us"
+  /// String value for restricting results to a set of regions
+  /// e.g., region: "us"
   final String? region;
 
   /// The suggestions box controller
@@ -279,9 +267,6 @@ class PlacesSearchNearby extends StatelessWidget {
 
   /// Can show clear button on search text field
   final bool showClearButton;
-
-  /// Bounds for restricting results to a set of bounds
-  final bool strictbounds;
 
   /// suffix icon for search text field. You can use [showClearButton] to show clear button or replace with suffix icon
   final Widget? suffixIcon;
@@ -380,17 +365,14 @@ class PlacesSearchNearby extends StatelessWidget {
     this.loadingBuilder,
     this.mounted = true,
     this.noItemsFoundBuilder,
-    this.offset,
     this.onChanged,
     this.onGetDetailsByPlaceId,
     this.onReset,
     this.onSaved,
     this.onSuggestionSelected,
-    this.origin,
     this.placesHttpClient,
     this.placesApiHeaders,
     this.placesBaseUrl,
-    this.radius,
     this.region,
     this.scrollController,
     this.searchHintText = "Start typing to search",
@@ -398,7 +380,6 @@ class PlacesSearchNearby extends StatelessWidget {
     this.sessionToken,
     this.showBackButton = true,
     this.showClearButton = true,
-    this.strictbounds = false,
     this.suggestionsBoxController,
     this.suggestionsBoxDecoration = const SuggestionsBoxDecoration(),
     this.suggestionsBoxVerticalOffset = 5.0,
@@ -426,6 +407,8 @@ class PlacesSearchNearby extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    logger.d('Prior to build() call, apiKey = $apiKey');
+
     /// Get text controller from [searchController] or create new instance of [TextEditingController] if [searchController] is null or empty
     final textController = useState<TextEditingController>(
         searchController ?? TextEditingController());
@@ -441,6 +424,13 @@ class PlacesSearchNearby extends StatelessWidget {
           title: ClipRRect(
             borderRadius: borderRadius,
             child: FormBuilderTypeAhead<PlacesSearchResult>(
+              animationDuration: animationDuration,
+              animationStart: animationStart,
+              autoFlipDirection: autoFlipDirection,
+              autovalidateMode: autovalidateMode,
+              controller: initialValue == null ? textController.value : null,
+              debounceDuration: debounceDuration,
+              direction: direction,
               decoration: decoration ??
                   InputDecoration(
                     hintText: searchHintText,
@@ -453,51 +443,7 @@ class PlacesSearchNearby extends StatelessWidget {
                           )
                         : suffixIcon,
                   ),
-              name: 'Search',
-              controller: initialValue == null ? textController.value : null,
-              selectionToTextTransformer: (result) {
-                return result.name;
-              },
-              itemBuilder: itemBuilder ??
-                  (context, content) {
-                    return ListTile(
-                      title: Text(content.name),
-                    );
-                  },
-              suggestionsCallback: (query) async {
-                List<PlacesSearchResult> searchResults =
-                    await searchState().search(
-                  query,
-                  apiKey,
-                  language: language,
-                  sessionToken: sessionToken,
-                  region: region,
-                  components: components,
-                  location: location,
-                  offset: offset,
-                  origin: origin,
-                  radius: radius,
-                  strictbounds: strictbounds,
-                  types: types,
-                );
-                return searchResults;
-              },
-              onSuggestionSelected: (value) async {
-                textController.value.selection = TextSelection.collapsed(
-                    offset: textController.value.text.length);
-                _getDetailsByPlaceId(value.placeId, context);
-                onSuggestionSelected?.call(value);
-              },
-              hideSuggestionsOnKeyboardHide: hideSuggestionsOnKeyboardHide,
-              initialValue: initialValue,
-              validator: validator,
-              suggestionsBoxDecoration: suggestionsBoxDecoration,
-              scrollController: scrollController,
-              animationDuration: animationDuration,
-              animationStart: animationStart,
-              autoFlipDirection: autoFlipDirection,
-              debounceDuration: debounceDuration,
-              direction: direction,
+              enabled: enabled,
               errorBuilder: errorBuilder,
               focusNode: focusNode,
               getImmediateSuggestions: getImmediateSuggestions,
@@ -505,22 +451,56 @@ class PlacesSearchNearby extends StatelessWidget {
               hideOnEmpty: hideOnEmpty,
               hideOnError: hideOnError,
               hideOnLoading: hideOnLoading,
+              hideSuggestionsOnKeyboardHide: hideSuggestionsOnKeyboardHide,
+              initialValue: initialValue,
+              itemBuilder: itemBuilder ??
+                  (context, content) {
+                    return ListTile(
+                      title: Text(content.name),
+                      subtitle: Text(
+                        '${content.vicinity}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    );
+                  },
               keepSuggestionsOnLoading: keepSuggestionsOnLoading,
               keepSuggestionsOnSuggestionSelected:
                   keepSuggestionsOnSuggestionSelected,
+              key: key,
               loadingBuilder: loadingBuilder,
+              name: 'Search',
               noItemsFoundBuilder: noItemsFoundBuilder,
-              suggestionsBoxController: suggestionsBoxController,
-              suggestionsBoxVerticalOffset: suggestionsBoxVerticalOffset,
-              textFieldConfiguration: textFieldConfiguration,
-              transitionBuilder: transitionBuilder,
-              valueTransformer: valueTransformer,
-              enabled: enabled,
-              autovalidateMode: autovalidateMode,
               onChanged: onChanged,
               onReset: onReset,
               onSaved: onSaved,
-              key: key,
+              onSuggestionSelected: (value) async {
+                textController.value.selection = TextSelection.collapsed(
+                    offset: textController.value.text.length);
+                _getDetailsByPlaceId(value.placeId, context);
+                onSuggestionSelected?.call(value);
+              },
+              scrollController: scrollController,
+              selectionToTextTransformer: (result) {
+                return result.name;
+              },
+              suggestionsBoxController: suggestionsBoxController,
+              suggestionsBoxDecoration: suggestionsBoxDecoration,
+              suggestionsBoxVerticalOffset: suggestionsBoxVerticalOffset,
+              suggestionsCallback: (query) async {
+                List<PlacesSearchResult> searchResults =
+                    await searchState().search(
+                  apiKey: apiKey,
+                  query: query,
+                  language: language,
+                  location: location,
+                  types: types,
+                );
+                return searchResults;
+              },
+              textFieldConfiguration: textFieldConfiguration,
+              transitionBuilder: transitionBuilder,
+              validator: validator,
+              valueTransformer: valueTransformer,
             ),
           ),
         ),

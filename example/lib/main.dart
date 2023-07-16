@@ -50,7 +50,7 @@ class _MyAppState extends State<MyApp> {
                   height: MediaQuery.of(context).size.height * 0.90,
                   width: MediaQuery.of(context).size.width * 0.99,
                   child: MapLocationPicker(
-                    apiKey: 'AIzaSyAcafFWFqol3FN2UmfepVPV23MoxwlxXNE',
+                    apiKey: '',
                     autocompleteTextboxDecoration: InputDecoration(
                       contentPadding: const EdgeInsets.fromLTRB(
                         16.0,
@@ -69,8 +69,6 @@ class _MyAppState extends State<MyApp> {
                     borderRadius: const BorderRadius.all(Radius.circular(5)),
                     currentLatLng: const LatLng(37.6922400, -97.3375400),
                     onNext: (p0) {},
-                    placesBaseUrl:
-                        'https://maps.googleapis.com/maps/api/place/nearbysearch/',
                     topCardMargin: const EdgeInsets.only(top: 15.0),
                     strictbounds: true,
                   ),
