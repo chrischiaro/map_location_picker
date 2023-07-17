@@ -407,7 +407,7 @@ class PlacesSearchNearby extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    logger.d('Prior to build() call, apiKey = $apiKey');
+    // logger.d('Prior to build() call, apiKey = $apiKey');
 
     /// Get text controller from [searchController] or create new instance of [TextEditingController] if [searchController] is null or empty
     final textController = useState<TextEditingController>(

@@ -32,20 +32,82 @@ class MapLocationPicker extends StatefulWidget {
   /// Top card text field border radius
   final BorderRadius? borderRadius;
 
-  /// Bottom card color
+  /// Color of the "Tap to show more results" button that shows on the bottom-card chip.
+  /// The chip is a component of the bottom card.
+  final Color? bottomCardChipButtonColor;
+
+  /// How much elevation to show for the "Tap to show more results" button that shows on the bottom-card chip.
+  /// The chip is a component of the bottom card.
+  final double? bottomCardChipButtonElevation;
+
+  /// Padding around the text in the "Tap to show more results" chip.
+  /// The chip is a component of the bottom card.
+  final EdgeInsetsGeometry? bottomCardChipButtonLabelPadding;
+
+  /// TextStyle for the "Tap to show more results" text in the chip.
+  /// The chip is a component of the bottom card.
+  final TextStyle? bottomCardChipButtonLabelStyle;
+
+  /// Color of the shadow under the "Tap to show more results" button that shows on the bottom-card chip.
+  /// The chip is a component of the bottom card.
+  final Color? bottomCardChipButtonShadowColor;
+
+  /// OutlinedBorder for the "Tap to show more results" button that shows on the bottom-card chip.
+  /// The chip is a component of the bottom card.
+  final OutlinedBorder? bottomCardChipButtonShape;
+
+  /// SurfaceTintColor for the "Tap to show more results" button that shows on the bottom-card chip.
+  /// The chip is a component of the bottom card.
+  final Color? bottomCardChipButtonSurfaceTintColor;
+
+  /// Color property for the Card widget that makes the bottom card.
+  /// Doesn't seem to affect the look of the card. Use the bottomCardTileColor property instead.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
   final Color? bottomCardColor;
 
-  /// Bottom card icon
+  /// The icon that displays trailing the text in the bottom card tile.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
   final Icon bottomCardIcon;
 
-  /// Bottom card margin
+  /// Bottom card margin.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
   final EdgeInsetsGeometry bottomCardMargin;
 
-  /// Bottom card shape
+  /// BorderShape for the bottom card.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
   final ShapeBorder bottomCardShape;
 
-  /// Bottom card tooltip
+  /// Color for the tile in the bottom card.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final Color? bottomCardTileColor;
+
+  /// Content padding for the tile in the bottom card.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final EdgeInsetsGeometry? bottomCardTileContentPadding;
+
+  /// Title text alignment for the tile in the bottom card.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final ListTileTitleAlignment? bottomCardTileTitleAlignment;
+
+  /// Bottom card tooltip.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
   final String bottomCardTooltip;
+
+  /// ShapeBorder to apply to the tile in the bottom card.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final ShapeBorder? bottomCardTileShape;
+
+  /// Text style to apply to the subtitle text (second row of text) in the bottom-card tile.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final TextStyle? bottomCardTileSubtitleTextStyle;
+
+  /// Color of the text in the bottom-card tile.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final Color? bottomCardTileTextColor;
+
+  /// Text style to apply to the text in the bottom-card tile.
+  /// The bottom card tile shows the address of the place that has been clicked on the map.
+  final TextStyle? bottomCardTileTitleTextStyle;
 
   /// Compass for the map (default: true)
   final bool compassEnabled;
@@ -180,12 +242,26 @@ class MapLocationPicker extends StatefulWidget {
     this.autocompleteTextboxDecoration,
     this.backButton,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.bottomCardChipButtonColor,
+    this.bottomCardChipButtonElevation,
+    this.bottomCardChipButtonLabelPadding,
+    this.bottomCardChipButtonLabelStyle,
+    this.bottomCardChipButtonShadowColor,
+    this.bottomCardChipButtonShape,
+    this.bottomCardChipButtonSurfaceTintColor,
     this.bottomCardColor,
     this.bottomCardIcon = const Icon(Icons.send),
     this.bottomCardMargin = const EdgeInsets.fromLTRB(8, 8, 8, 16),
     this.bottomCardShape = const RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(12)),
     ),
+    this.bottomCardTileColor,
+    this.bottomCardTileContentPadding,
+    this.bottomCardTileShape,
+    this.bottomCardTileTextColor,
+    this.bottomCardTileTitleAlignment,
+    this.bottomCardTileTitleTextStyle,
+    this.bottomCardTileSubtitleTextStyle,
     this.bottomCardTooltip = "Continue with this location",
     this.canPopOnNextButtonTaped = false,
     this.compassEnabled = true,
@@ -235,6 +311,18 @@ class MapLocationPicker extends StatefulWidget {
   State<MapLocationPicker> createState() => _MapLocationPickerState();
 }
 
+class AddressDisplayInfo {
+  AddressDisplayInfo({
+    this.name,
+    this.formattedAddress,
+    this.addressParts,
+  });
+
+  final String? name;
+  final String? formattedAddress;
+  List<AddressComponent>? addressParts;
+}
+
 class _MapLocationPickerState extends State<MapLocationPicker> {
   /// Map controller for movement & zoom
   final Completer<GoogleMapController> _controller = Completer();
@@ -243,7 +331,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   late LatLng _initialPosition = const LatLng(37.6922400, -97.3375400);
 
   /// initial address text
-  late String _address = "Tap on map to get address";
+  late AddressDisplayInfo _address =
+      AddressDisplayInfo(name: 'Tap on map to get address');
 
   /// Map type (default: MapType.normal)
   late MapType _mapType = MapType.normal;
@@ -279,7 +368,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       position: _initialPosition,
     ));
 
-    logger.d('PlacesSearchType = ${widget.placesSearchType}');
+    // logger.d('PlacesSearchType = ${widget.placesSearchType}');
 
     return Scaffold(
       body: Stack(
@@ -405,11 +494,26 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      title: Text(_address),
+                      contentPadding: widget.bottomCardTileContentPadding,
+                      shape: widget.bottomCardTileShape,
+                      subtitle: _address.name != null
+                          ? Text(_address.formattedAddress ?? '')
+                          : null,
+                      subtitleTextStyle: widget.bottomCardTileSubtitleTextStyle,
+                      textColor: widget.bottomCardTileTextColor,
+                      tileColor: widget.bottomCardTileColor,
+                      title: Text(_address.name ??
+                          _format2Lines(_address.addressParts ?? [])),
+                      titleAlignment: widget.bottomCardTileTitleAlignment,
+                      titleTextStyle: widget.bottomCardTileTitleTextStyle,
                       trailing: IconButton(
                         tooltip: widget.bottomCardTooltip,
                         icon: widget.bottomCardIcon,
                         onPressed: () async {
+                          logger.d(
+                              'onPressed fired;\nformattedAddress: ${_geocodingResult?.formattedAddress}\n'
+                              'addressComponents: ${_geocodingResult?.addressComponents.map((e) => e.longName)}\n'
+                              'postcodeLocalities: ${_geocodingResult?.postcodeLocalities}\n');
                           widget.onNext.call(_geocodingResult);
                           if (widget.canPopOnNextButtonTaped) {
                             Navigator.pop(context);
@@ -432,7 +536,11 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                                   return ListTile(
                                     title: Text(element.formattedAddress ?? ""),
                                     onTap: () {
-                                      _address = element.formattedAddress ?? "";
+                                      _address = AddressDisplayInfo(
+                                        formattedAddress:
+                                            element.formattedAddress ?? '',
+                                        addressParts: element.addressComponents,
+                                      );
                                       _geocodingResult = element;
                                       setState(() {});
                                       Navigator.pop(context);
@@ -455,6 +563,14 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                           label: Text(
                             "Tap to show ${(_geocodingResultList.length - 1)} more result options",
                           ),
+                          labelPadding: widget.bottomCardChipButtonLabelPadding,
+                          labelStyle: widget.bottomCardChipButtonLabelStyle,
+                          shape: widget.bottomCardChipButtonShape,
+                          elevation: widget.bottomCardChipButtonElevation,
+                          backgroundColor: widget.bottomCardChipButtonColor,
+                          shadowColor: widget.bottomCardChipButtonShadowColor,
+                          surfaceTintColor:
+                              widget.bottomCardChipButtonSurfaceTintColor,
                         ),
                       ),
                   ],
@@ -465,6 +581,38 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         ],
       ),
     );
+  }
+
+  String _format2Lines(List<AddressComponent> addressParts) {
+    if (addressParts.isNotEmpty) {
+      final String s1 =
+          addressParts[0].longName.length + addressParts[1].longName.length > 20
+              ? '${addressParts[0].longName} ${addressParts[1].shortName}\n'
+              : '${addressParts[0].longName} ${addressParts[1].longName}\n';
+      final String s2 =
+          addressParts[2].longName.length + addressParts[3].longName.length > 20
+              ? '${addressParts[2].longName}, ${addressParts[3].shortName}'
+              : '${addressParts[2].longName}, ${addressParts[3].longName}';
+
+      if ((addressParts[0].longName.length + addressParts[1].longName.length >
+              20) ||
+          (addressParts[2].longName.length + addressParts[3].longName.length >
+              20)) {
+        String debug1 = '# address parts: ${addressParts.length}\n'
+            's1 test len: ${addressParts[0].longName.length + addressParts[1].longName.length}\n'
+            's2 test len: ${addressParts[2].longName.length + addressParts[3].longName.length}\n';
+
+        List<String> debug2;
+        int i = 0;
+        debug2 = addressParts
+            .map((e) => '${i++}:L/S: ${e.longName} / ${e.shortName}')
+            .toList();
+
+        logger.d(debug1 + debug2.join('\n'));
+      }
+      return s1 + s2;
+    }
+    return '';
   }
 
   PlacesAutocomplete buildPlacesAutocomplete() {
@@ -497,7 +645,11 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         final controller = await _controller.future;
         controller
             .animateCamera(CameraUpdate.newCameraPosition(cameraPosition()));
-        _address = placesDetails.result.formattedAddress ?? "";
+        _address = AddressDisplayInfo(
+          name: placesDetails.result.name,
+          formattedAddress: placesDetails.result.formattedAddress ?? '',
+          addressParts: placesDetails.result.addressComponents,
+        );
         widget.onSuggestionSelected?.call(placesDetails);
         setState(() {});
       },
@@ -543,7 +695,11 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         final controller = await _controller.future;
         controller
             .animateCamera(CameraUpdate.newCameraPosition(cameraPosition()));
-        _address = placesDetails.result.formattedAddress ?? "";
+        _address = AddressDisplayInfo(
+          name: placesDetails.result.name,
+          formattedAddress: placesDetails.result.formattedAddress ?? '',
+          addressParts: placesDetails.result.addressComponents,
+        );
         widget.onSuggestionSelected?.call(placesDetails);
         setState(() {});
       },
@@ -601,7 +757,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           response.unknownError ||
           response.isOverQueryLimit) {
         logger.e(response.errorMessage);
-        _address = response.status;
+        _address = AddressDisplayInfo(name: response.status);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -612,7 +768,10 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         }
         return;
       }
-      _address = response.results.first.formattedAddress ?? "";
+      _address = AddressDisplayInfo(
+        formattedAddress: response.results.first.formattedAddress ?? '',
+        addressParts: response.results.first.addressComponents,
+      );
       _geocodingResult = response.results.first;
       if (response.results.length > 1) {
         _geocodingResultList = response.results;
