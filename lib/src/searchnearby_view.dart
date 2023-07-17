@@ -230,9 +230,6 @@ class PlacesSearchNearby extends StatelessWidget {
   /// on form save callback
   final void Function(PlacesSearchResult?)? onSaved;
 
-  /// On suggestion selected callback
-  final void Function(PlacesSearchResult)? onSuggestionSelected;
-
   /// apiHeader is used to add headers to the request.
   final Map<String, String>? placesApiHeaders;
 
@@ -369,7 +366,6 @@ class PlacesSearchNearby extends StatelessWidget {
     this.onGetDetailsByPlaceId,
     this.onReset,
     this.onSaved,
-    this.onSuggestionSelected,
     this.placesHttpClient,
     this.placesApiHeaders,
     this.placesBaseUrl,
@@ -477,7 +473,6 @@ class PlacesSearchNearby extends StatelessWidget {
                 textController.value.selection = TextSelection.collapsed(
                     offset: textController.value.text.length);
                 _getDetailsByPlaceId(value.placeId, context);
-                onSuggestionSelected?.call(value);
               },
               scrollController: scrollController,
               selectionToTextTransformer: (result) {

@@ -172,8 +172,7 @@ class MapLocationPicker extends StatefulWidget {
   /// On Next Page callback
   final Function(GeocodingResult?) onNext;
 
-  /// On Suggestion Selected callback
-  final Function(PlacesDetailsResponse?)? onSuggestionSelected;
+  final Function(PlacesDetailsResponse?)? onGetDetailsByPlaceId;
 
   /// Origin location for calculating distance from results
   /// origin: Location(lat: -33.852, lng: 151.211),
@@ -283,7 +282,7 @@ class MapLocationPicker extends StatefulWidget {
     this.minMaxZoomPreference = const MinMaxZoomPreference(10, 20),
     this.offset,
     required this.onNext,
-    this.onSuggestionSelected,
+    this.onGetDetailsByPlaceId,
     this.origin,
     this.padding = const EdgeInsets.all(0),
     this.placesApiHeaders,
@@ -348,6 +347,13 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
   /// Search text field controller
   late TextEditingController _searchController = TextEditingController();
+
+  /// Returns the address currently displayed in the Bottom Card.
+  /// If no address has been selected, the AddressDisplayInfo will be an empty object with the
+  /// 'name' set to 'Tap on map to get address'.
+  AddressDisplayInfo get addressInBottomCard {
+    return _address;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -650,7 +656,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           formattedAddress: placesDetails.result.formattedAddress ?? '',
           addressParts: placesDetails.result.addressComponents,
         );
-        widget.onSuggestionSelected?.call(placesDetails);
+        widget.onGetDetailsByPlaceId?.call(placesDetails);
         setState(() {});
       },
       origin: widget.origin,
@@ -700,7 +706,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           formattedAddress: placesDetails.result.formattedAddress ?? '',
           addressParts: placesDetails.result.addressComponents,
         );
-        widget.onSuggestionSelected?.call(placesDetails);
+        widget.onGetDetailsByPlaceId?.call(placesDetails);
         setState(() {});
       },
       placesApiHeaders: widget.placesApiHeaders,
